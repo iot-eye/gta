@@ -30,7 +30,7 @@
 
         <!-- compiler -->
         <scala.plugin.version>2.11</scala.plugin.version>
-        <scala.version>2.11.8</scala.version>
+        <scala.version>2.13.2</scala.version>
         <groovy.version>3.0.0</groovy.version>
 
         <!-- flink -->
