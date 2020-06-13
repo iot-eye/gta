@@ -37,6 +37,9 @@
         <flink.version>1.9.0</flink.version>
         <aviator.version>5.0.0</aviator.version>
 
+        <!-- db -->
+        <mysql.version>mysql</mysql.version>
+
         <!-- tools -->
         <lombok.version>1.16.18</lombok.version>
         <fastjson.version>1.2.70</fastjson.version>
@@ -119,10 +122,18 @@
                 <version>${flink.version}</version>
             </dependency>
 
+            <!-- aviator -->
             <dependency>
                 <groupId>com.googlecode.aviator</groupId>
                 <artifactId>aviator</artifactId>
                 <version>${aviator.version}</version>
+            </dependency>
+
+            <!-- db -->
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${mysql.version}</version>
             </dependency>
 
             <!-- tools -->
