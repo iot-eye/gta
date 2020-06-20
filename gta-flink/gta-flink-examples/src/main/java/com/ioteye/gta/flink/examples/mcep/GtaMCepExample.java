@@ -49,7 +49,7 @@ public class GtaMCepExample {
         InjectionPatternFunction<MetrixEvent> injectionPatternFunction = new InjectionPatternFunction<MetrixEvent>() {
             @Override
             public void open() throws Exception {
-                // 没有操作
+                // not action
             }
 
             @Override
@@ -113,10 +113,6 @@ public class GtaMCepExample {
 
         PatternStream<MetrixEvent> metrixEventPatternStream = GtaCEP.injectPattern(partitionedInput, injectionPatternFunction);
 
-        //    final OutputTag<L> timedOutPartialMatchesTag,
-        //    final PatternFlatTimeoutFunction<T, L> patternFlatTimeoutFunction,
-        //    final PatternFlatSelectFunction<T, R> patternFlatSelectFunction
-        // this needs to be an anonymous inner class, so that we can analyze the type
         OutputTag<String> outputTag = new OutputTag<String>("side-output"){};
 
         SingleOutputStreamOperator<String> select = metrixEventPatternStream.select(
@@ -140,23 +136,6 @@ public class GtaMCepExample {
 
         select.print();
         select.getSideOutput(outputTag).print();
-
-//
-//                metrixEventPatternStream.flatSelect(
-//                new OutputTag<>("metrix"),
-//                new PatternFlatTimeoutFunction<MetrixEvent, String> () {
-//                    @Override
-//                    public void timeout(Map<String, List<MetrixEvent>> pattern, long timeoutTimestamp, Collector<String> out) throws Exception {
-//                        log.info("timeout = {}", out);
-//                    }
-//                },
-//                new PatternFlatSelectFunction<MetrixEvent, String>() {
-//                    @Override
-//                    public void flatSelect(Map<String, List<MetrixEvent>> pattern, Collector<String> out) throws Exception {
-//                        log.info("flatSelect = {}", out);
-//                    }
-//                }
-//        ).print();
 
         env.execute("mcep");
     }
