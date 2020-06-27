@@ -1,24 +1,17 @@
 package com.ioteye.gta.flink.mcep.rule;
 
 import com.ioteye.gta.flink.mcep.pattern.Pattern;
-import com.ioteye.gta.flink.mcep.util.TimeUtils;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.Set;
 
 @Data
-public class RulePattern<IN extends InjectEvent> implements Serializable {
-    private static final long serialVersionUID = -2782959101696893392L;
+public class RulePattern<IN extends InjectEvent> extends MCepMeta implements Serializable {
+    private static final long serialVersionUID = 2782959101696893392L;
 
     /** pattern id **/
     private Integer patternId;
-
-    /** expired **/
-    private Boolean expired;
-    /** expired time **/
-    private LocalDateTime expiredTime;
 
     /** pattern **/
     private Pattern<IN, ?> pattern;
@@ -26,13 +19,6 @@ public class RulePattern<IN extends InjectEvent> implements Serializable {
     /** multi event */
     private Set<RuleEvent<IN>> ruleEvents;
 
-    public boolean expired() {
-        LocalDateTime currentLocalTime = TimeUtils.currentLocalTime();
-        if (Boolean.TRUE.equals(expired) || (expiredTime != null && currentLocalTime.isBefore(expiredTime))) {
-            return true;
-        }
-        return false;
-    }
 
     @Override
     public final int hashCode() {

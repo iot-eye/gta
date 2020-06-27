@@ -3,6 +3,7 @@ package com.ioteye.gta.flink.examples.mcep;
 import com.ioteye.gta.flink.mcep.*;
 import com.ioteye.gta.flink.mcep.pattern.Pattern;
 import com.ioteye.gta.flink.mcep.pattern.conditions.IterativeCondition;
+import com.ioteye.gta.flink.mcep.pattern.conditions.TimeIterativeCondition;
 import com.ioteye.gta.flink.mcep.rule.RuleEvent;
 import com.ioteye.gta.flink.mcep.rule.RulePattern;
 import lombok.extern.slf4j.Slf4j;
@@ -56,27 +57,57 @@ public class GtaMCepExample {
             public List<RulePattern<MetrixEvent>> injectPatterns() throws Exception {
                 Pattern<MetrixEvent, MetrixEvent> loginFailPattern = Pattern.<MetrixEvent>
                         begin("first")
-                        .where(new IterativeCondition<MetrixEvent>() {
+                        .where(new TimeIterativeCondition<MetrixEvent>() {
                             @Override
-                            public boolean filter(MetrixEvent loginEvent, Context context) throws Exception {
-                                System.out.println("first: " + loginEvent);
-                                return loginEvent.getType().equals("fail");
+                            public int step(MetrixEvent event, Context<MetrixEvent> ctx) throws Exception {
+                                return 1;
+                            }
+
+                            @Override
+                            public int conditionId(MetrixEvent event, Context<MetrixEvent> ctx) throws Exception {
+                                return 1;
+                            }
+
+                            @Override
+                            public boolean timeFilter(MetrixEvent event, Context ctx) throws Exception {
+                                System.out.println("first: " + event);
+                                return event.getType().equals("fail");
                             }
                         })
                         .next("second")
-                        .where(new IterativeCondition<MetrixEvent>() {
+                        .where(new TimeIterativeCondition<MetrixEvent>() {
                             @Override
-                            public boolean filter(MetrixEvent loginEvent, Context context) throws Exception {
-                                System.out.println("second: " + loginEvent);
-                                return loginEvent.getType().equals("fail");
+                            public int step(MetrixEvent event, Context<MetrixEvent> ctx) throws Exception {
+                                return 1;
+                            }
+
+                            @Override
+                            public int conditionId(MetrixEvent event, Context<MetrixEvent> ctx) throws Exception {
+                                return 2;
+                            }
+
+                            @Override
+                            public boolean timeFilter(MetrixEvent event, Context ctx) throws Exception {
+                                System.out.println("second: " + event);
+                                return event.getType().equals("fail");
                             }
                         })
+                        .within(Time.seconds(10))
                         .next("three")
-                        .where(new IterativeCondition<MetrixEvent>() {
+                        .where(new TimeIterativeCondition<MetrixEvent>() {
                             @Override
-                            public boolean filter(MetrixEvent loginEvent, Context context) throws Exception {
-                                System.out.println("three: " + loginEvent);
-                                return loginEvent.getType().equals("fail");
+                            public int step(MetrixEvent event, Context<MetrixEvent> ctx) throws Exception {
+                                return 2;
+                            }
+                            @Override
+                            public int conditionId(MetrixEvent event, Context<MetrixEvent> ctx) throws Exception {
+                                return 3;
+                            }
+
+                            @Override
+                            public boolean timeFilter(MetrixEvent event, Context ctx) throws Exception {
+                                System.out.println("three: " + event);
+                                return event.getType().equals("fail");
                             }
                         })
                         .within(Time.seconds(10));

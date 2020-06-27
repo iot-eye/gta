@@ -1,36 +1,22 @@
 package com.ioteye.gta.flink.mcep.rule;
 
 import com.ioteye.gta.flink.mcep.functions.EventSelector;
-import com.ioteye.gta.flink.mcep.util.TimeUtils;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class RuleEvent<IN extends InjectEvent> implements Serializable {
+public class RuleEvent<IN extends InjectEvent> extends MCepMeta  implements Serializable {
     private static final long serialVersionUID = -792215188420027391L;
 
     /** event id **/
     private Integer eventId;
 
-    /** expired **/
-    private Boolean expired;
-    /** expired time **/
-    private LocalDateTime expiredTime;
-
     /** event selector **/
     private EventSelector<IN, RuleEvent<IN>> eventSelector;
 
-    public boolean expired() {
-        LocalDateTime currentLocalTime = TimeUtils.currentLocalTime();
-        if (Boolean.TRUE.equals(expired) || (expiredTime != null && currentLocalTime.isBefore(expiredTime))) {
-            return true;
-        }
-        return false;
-    }
 
     public RuleEvent() {
         super();

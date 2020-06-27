@@ -6,16 +6,14 @@ import com.ioteye.gta.flink.mcep.nfa.NFAState;
 import com.ioteye.gta.flink.mcep.nfa.aftermatch.AfterMatchSkipStrategy;
 import com.ioteye.gta.flink.mcep.nfa.compiler.NFACompiler;
 import com.ioteye.gta.flink.mcep.pattern.Pattern;
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.java.tuple.Tuple3;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
@@ -24,12 +22,10 @@ public class RuleNFA<IN extends InjectEvent> implements Serializable {
     private static final long serialVersionUID = 478853296330152693L;
 
     /** pattern to nfa map **/
-    private Map<
-                            RulePattern<IN>, Tuple3<NFACompiler.NFAFactory<IN>, NFA<IN>, AfterMatchSkipStrategy>
-                         > nfaMap = new ConcurrentHashMap<>();
+    private Map<RulePattern<IN>, Tuple3<NFACompiler.NFAFactory<IN>, NFA<IN>, AfterMatchSkipStrategy>> nfaMap = new ConcurrentHashMap<>();
 
     /** event to pattern map **/
-    private Map<RuleEvent, Set<RulePattern<IN>>> eventPatternRelationMap = new ConcurrentHashMap<>();
+    private Map<RuleEvent<IN>, Set<RulePattern<IN>>> eventPatternRelationMap = new ConcurrentHashMap<>();
 
     /** event selector **/
     private Map<EventSelector<IN, RuleEvent<IN>>, Set<RulePattern<IN>>> eventSelectorPatternRelationMap = new ConcurrentHashMap<>();
@@ -86,7 +82,7 @@ public class RuleNFA<IN extends InjectEvent> implements Serializable {
         Set<RuleEvent<IN>> ruleEventSet = rulePattern.getRuleEvents();
 
         for(RuleEvent<IN> ruleEvent: ruleEventSet) {
-            if (ruleEvent.expired()) {
+            if (ruleEvent.notValid()) {
                 continue;
             }
             Set<RulePattern<IN>> eventPatternSet = eventPatternRelationMap.computeIfAbsent(ruleEvent, e -> new HashSet<>());
@@ -102,7 +98,7 @@ public class RuleNFA<IN extends InjectEvent> implements Serializable {
     }
 
     public void removeExpiredPattern(RulePattern<IN> rulePattern) throws Exception {
-        if (rulePattern.expired()) {
+        if (rulePattern.notValid()) {
             Integer patternId = rulePattern.getPatternId();
             if (computeStateMap != null) {
                 computeStateMap.remove(patternId);
@@ -113,10 +109,11 @@ public class RuleNFA<IN extends InjectEvent> implements Serializable {
                 NFA<IN> nfa = nfaMeta.f1;
                 expiredNfaSet.add(nfa);
             }
+        }
 
-            Set<RuleEvent<IN>> ruleEventSet = rulePattern.getRuleEvents();
-            for(RuleEvent<IN> ruleEvent: ruleEventSet) {
-
+        Set<RuleEvent<IN>> ruleEventSet = rulePattern.getRuleEvents();
+        for(RuleEvent<IN> ruleEvent: ruleEventSet) {
+            if (ruleEvent.notValid()) {
                 EventSelector<IN, RuleEvent<IN>> eventSelector = ruleEvent.getEventSelector();
                 Set<RulePattern<IN>> eventSelectorPatternSet = eventSelectorPatternRelationMap.get(eventSelector);
                 if (eventSelectorPatternSet != null) {
@@ -138,6 +135,38 @@ public class RuleNFA<IN extends InjectEvent> implements Serializable {
                 }
             }
         }
+    }
+
+    public void checkoutExpireAll () {
+        Iterator<Map.Entry<RulePattern<IN>, Tuple3<NFACompiler.NFAFactory<IN>, NFA<IN>, AfterMatchSkipStrategy>>> iter1 = nfaMap.entrySet().iterator();
+        while (iter1.hasNext()) {
+            Map.Entry<RulePattern<IN>, Tuple3<NFACompiler.NFAFactory<IN>, NFA<IN>, AfterMatchSkipStrategy>> entry = iter1.next();
+            RulePattern<IN> rulePattern = entry.getKey();
+            if(rulePattern == null || rulePattern.notValid()) {
+                iter1.remove();
+            }
+        }
+
+        Iterator<Map.Entry<RuleEvent<IN>, Set<RulePattern<IN>>>> iter2 = eventPatternRelationMap.entrySet().iterator();
+        while (iter2.hasNext()) {
+            Map.Entry<RuleEvent<IN>, Set<RulePattern<IN>>> entry = iter2.next();
+            RuleEvent<IN> ruleEvent = entry.getKey();
+            if (ruleEvent == null) {
+                iter2.remove();
+                continue;
+            }
+
+            if (ruleEvent.notValid()) {
+                iter2.remove();
+
+                EventSelector<IN, RuleEvent<IN>> eventSelector = ruleEvent.getEventSelector();
+                if (eventSelector != null) {
+                    eventSelectorPatternRelationMap.remove(eventSelector);
+                    eventSelectorSet.remove(eventSelector);
+                }
+            }
+        }
+
     }
 
     public NFAState getOrGenerateNfaState(RulePattern<IN> rulePattern) throws Exception {

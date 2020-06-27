@@ -251,12 +251,15 @@ public class CepOperator<IN extends InjectEvent, KEY, OUT>
 			RuleNFA<IN> ruleNFA = this.ruleNFA.cloneNfa();
 			List<RulePattern<IN>> rulePatternList = injectionFunction.injectPatterns();
 			for(RulePattern<IN> rulePattern: rulePatternList) {
-				// remove
-				ruleNFA.removeExpiredPattern(rulePattern);
-
 				// inject
 				refreshNFA(ruleNFA, rulePattern);
+
+				// remove
+				ruleNFA.removeExpiredPattern(rulePattern);
 			}
+
+			// checkout expire element
+			ruleNFA.checkoutExpireAll();
 
 			Set<NFA<IN>> expiredNfaSet = new HashSet<>(ruleNFA.getExpiredNfaSet());
 			scheduledExecutorService.schedule(new Thread(() -> closeExpiredNfa(expiredNfaSet)), 10, TimeUnit.SECONDS);
@@ -309,7 +312,7 @@ public class CepOperator<IN extends InjectEvent, KEY, OUT>
 		if (isProcessingTime) {
 			if (comparator == null) {
 				Set<EventSelector<IN, RuleEvent<IN>>> eventSelectorSet = ruleNFA.getEventSelectorSet();
-				Map<RuleEvent, Set<RulePattern<IN>>> eventPatternRelationMap = ruleNFA.getEventPatternRelationMap();
+				Map<RuleEvent<IN>, Set<RulePattern<IN>>> eventPatternRelationMap = ruleNFA.getEventPatternRelationMap();
 
 				for(EventSelector<IN, RuleEvent<IN>> eventSelector: eventSelectorSet) {
 					RuleEvent<IN> ruleEvent = eventSelector.getEvent(inValue);
@@ -408,7 +411,7 @@ public class CepOperator<IN extends InjectEvent, KEY, OUT>
 
 		// STEP 2
 		Set<EventSelector<IN, RuleEvent<IN>>> eventSelectorSet = ruleNFA.getEventSelectorSet();
-		Map<RuleEvent, Set<RulePattern<IN>>> eventPatternRelationMap = ruleNFA.getEventPatternRelationMap();
+		Map<RuleEvent<IN>, Set<RulePattern<IN>>> eventPatternRelationMap = ruleNFA.getEventPatternRelationMap();
 
 		while (!sortedTimestamps.isEmpty() && sortedTimestamps.peek() <= timerService.currentWatermark()) {
 			long timestamp = sortedTimestamps.poll();
@@ -471,7 +474,7 @@ public class CepOperator<IN extends InjectEvent, KEY, OUT>
 
 		// STEP 2
 		Set<EventSelector<IN, RuleEvent<IN>>> eventSelectorSet = ruleNFA.getEventSelectorSet();
-		Map<RuleEvent, Set<RulePattern<IN>>> eventPatternRelationMap = ruleNFA.getEventPatternRelationMap();
+		Map<RuleEvent<IN>, Set<RulePattern<IN>>> eventPatternRelationMap = ruleNFA.getEventPatternRelationMap();
 
 		Set<RulePattern<IN>> allRulePatternSet = new HashSet<>();
 
