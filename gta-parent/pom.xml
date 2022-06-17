@@ -42,7 +42,7 @@
 
         <!-- tools -->
         <lombok.version>1.16.18</lombok.version>
-        <fastjson.version>1.2.70</fastjson.version>
+        <fastjson.version>1.2.83</fastjson.version>
 
         <!-- log -->
         <slf4j.version>1.7.16</slf4j.version>
